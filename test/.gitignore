@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Environment
+# .env
+*.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+dist/
+build/
+
+# Test
+test.db
+.pytest_cache/
+.coverage
+
+# Docker
+postgres_data/
+
+# Answer key (interviewer only)
+docs/ANSWER_KEY.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+docs/
