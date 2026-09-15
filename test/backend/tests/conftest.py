@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import os
 from collections.abc import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
@@ -23,6 +23,11 @@ test_session_maker = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
+
+TEST_REDIS = MagicMock()
+TEST_REDIS.get = AsyncMock(return_value=None)
+TEST_REDIS.set = AsyncMock()
+TEST_REDIS.delete = AsyncMock()
 
 
 @pytest.fixture(scope="session")
@@ -52,15 +57,20 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 def override_get_redis():
-    mock_redis = MagicMock()
-    mock_redis.get = AsyncMock(return_value=None)
-    mock_redis.set = AsyncMock()
-    mock_redis.delete = AsyncMock()
-    return mock_redis
+    return TEST_REDIS
 
 
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_redis] = override_get_redis
+
+
+@pytest.fixture
+def redis_mock():
+    TEST_REDIS.reset_mock()
+    TEST_REDIS.get = AsyncMock(return_value=None)
+    TEST_REDIS.set = AsyncMock()
+    TEST_REDIS.delete = AsyncMock()
+    return TEST_REDIS
 
 
 @pytest.fixture
