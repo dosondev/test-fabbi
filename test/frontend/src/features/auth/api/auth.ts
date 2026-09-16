@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, clearAuthState } from "@/lib/api";
 
 interface LoginRequest {
   email: string;
@@ -49,8 +49,7 @@ export function useLogout() {
       await api.post("/auth/logout");
     },
     onSuccess: () => {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      clearAuthState();
     },
   });
 }
