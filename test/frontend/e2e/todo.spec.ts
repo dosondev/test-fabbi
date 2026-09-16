@@ -48,14 +48,14 @@ test("full user journey: register, create todo, toggle completion, logout", asyn
   await createTodo(page, todoTitle, "Created from Playwright");
 
   const todoCheckbox = page.getByLabel(todoTitle);
-  await expect(todoCheckbox).not.toBeChecked();
-  await todoCheckbox.check();
-  await expect(todoCheckbox).toBeChecked();
+  await expect(todoCheckbox).toHaveAttribute("aria-checked", "false");
+  await todoCheckbox.click();
+  await expect(todoCheckbox).toHaveAttribute("aria-checked", "true");
 
   await logout(page);
   await login(page, email);
   await expect(page.getByText(todoTitle)).toBeVisible();
-  await expect(page.getByLabel(todoTitle)).toBeChecked();
+  await expect(page.getByLabel(todoTitle)).toHaveAttribute("aria-checked", "true");
 
   await logout(page);
 });
