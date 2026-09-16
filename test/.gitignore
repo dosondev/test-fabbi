@@ -32,4 +32,9 @@ docs/ANSWER_KEY.md
 .DS_Store
 Thumbs.db
 
-docs/
+docs/*
+!docs/
+!docs/MANUAL_TEST_PLAN.md
+!docs/TODO_SHARING_SPEC.md
+!docs/DB_INDEXING_BENCHMARK.md
+

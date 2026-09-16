@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,7 +14,7 @@ from app.schemas.user import (
     UserCreate,
     UserResponse,
 )
-from app.services.auth_service import create_user, get_user_by_email
+from app.services.auth_service import authenticate_user, create_user, get_user_by_email, get_user_by_id
 
 router = APIRouter()
 
@@ -49,20 +51,11 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ):
     """Authenticate user and return tokens."""
-    user = await get_user_by_email(db, user_data.email)
-
+    user = await authenticate_user(db, user_data.email, user_data.password)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User with this email not found",
-        )
-
-    from app.core.security import verify_password
-
-    if not verify_password(user_data.password, user.hashed_password):
-        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect password",
+            detail="Invalid email or password",
         )
 
     access_token = create_access_token(data={"sub": str(user.id)})
@@ -90,8 +83,29 @@ async def refresh_token(
         )
 
     user_id = payload.get("sub")
-    access_token = create_access_token(data={"sub": user_id})
-    refresh_token = create_refresh_token(data={"sub": user_id})
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    user = await get_user_by_id(db, user_uuid)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
+    access_token = create_access_token(data={"sub": str(user.id)})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
     return TokenResponse(
         access_token=access_token,

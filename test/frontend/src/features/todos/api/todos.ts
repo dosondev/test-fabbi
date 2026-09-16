@@ -31,10 +31,9 @@ interface UpdateTodoRequest {
   completed?: boolean;
 }
 
-
 export function useTodos(page: number = 1, size: number = 10000) {
   return useQuery({
-    queryKey: ["todos"],
+    queryKey: ["todos", { page, size }],
     queryFn: async (): Promise<TodoListResponse> => {
       const response = await api.get("/todos", {
         params: { page, size },
@@ -60,7 +59,6 @@ export function useCreateTodo() {
   });
 }
 
-
 export function useUpdateTodo() {
   return useMutation({
     mutationFn: async ({
@@ -72,25 +70,6 @@ export function useUpdateTodo() {
     }): Promise<Todo> => {
       const response = await api.put(`/todos/${id}`, data);
       return response.data;
-    },
-    onMutate: async ({ id, data }) => {
-      // Cancel outgoing queries
-      await queryClient.cancelQueries({ queryKey: ["todos"] });
-
-      // Snapshot previous value
-      const previousTodos = queryClient.getQueryData<TodoListResponse>(["todos"]);
-
-      // Optimistically update
-      if (previousTodos) {
-        queryClient.setQueryData<TodoListResponse>(["todos"], {
-          ...previousTodos,
-          items: previousTodos.items.map((todo) =>
-            todo.id === id ? { ...todo, ...data } : todo
-          ),
-        });
-      }
-
-      return { previousTodos };
     },
     onError: () => {
       toast.error("Failed to update todo");
